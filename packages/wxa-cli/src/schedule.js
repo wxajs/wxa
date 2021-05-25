@@ -123,7 +123,7 @@ class Schedule {
         let tasks = [];
         while (this.$depPending.length) {
             let dep = this.$depPending.shift();
-
+        
             // debug('file to parse %O', dep);
             tasks.push(this.$parse(dep));
         }
@@ -302,7 +302,7 @@ class Schedule {
             outerDependencies: new Set(),
             dependency: function(file) {
                 // debugger;
-                this.outerDependencies.add(file);
+                this.outerDependencies.add(path.normalize(file));
             },
         };
 

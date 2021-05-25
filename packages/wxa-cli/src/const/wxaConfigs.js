@@ -38,7 +38,7 @@ export default class DefaultWxaConfigs {
             ],
             optimization: {
                 splitDeps: {
-                    maxDeps: -1,
+                    enable: false,
                 },
                 allowEmptyAttributes: true,
                 transformPxToRpx: false,
