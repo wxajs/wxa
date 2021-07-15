@@ -54,6 +54,7 @@
 	},
 	"dependencies": {
 		"@vuepress/theme-default": "^1.5.4",
+		"lodash": "^4.17.21",
 		"vue-server-renderer": "^2.6.12"
 	}
 }

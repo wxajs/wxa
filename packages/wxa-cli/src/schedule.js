@@ -17,6 +17,7 @@ import DependencyResolver from './helpers/dependencyResolver';
 import ProgressTextBar from './helpers/progressTextBar';
 import Preformance from './helpers/performance';
 import simplify from './helpers/simplifyObj';
+import {treeShake} from './tree-shake/index';
 
 let debug = debugPKG('WXA:Schedule');
 
@@ -72,6 +73,7 @@ class Schedule {
         // if is mounting compiler, all task will be blocked.
         this.$isMountingCompiler = false;
         this.progress = new ProgressTextBar(this.current, wxaConfigs);
+        this.$depJsPending = [];
 
         // save all app configurations for compile time.
         // such as global components.
@@ -120,23 +122,81 @@ class Schedule {
 
     async $doDPA() {
         let tasks = [];
+    
         while (this.$depPending.length) {
             let dep = this.$depPending.shift();
 
+            if (!this.cmdOptions.watch && dep.src.endsWith('.js')) {
+                this.$depJsPending.push(dep);
+            } else {
+                tasks.push(this.$parse(dep));
+            }
+
             // debug('file to parse %O', dep);
-            tasks.push(this.$parse(dep));
         }
 
         let succ = await Promise.all(tasks);
 
         if (this.$depPending.length === 0) {
             // dependencies resolve complete
+            if (!this.cmdOptions.watch) {
+                let sub = await this.$dojsDPA();
+                return succ.concat(sub);
+            }
+
             this.progress.clean();
             return succ;
         } else {
             let sub = await this.$doDPA();
             return succ.concat(sub);
         }
+    }
+
+    async $dojsDPA() {
+        this.$depPending = this.$depJsPending;
+        this.$depJsPending = [];
+        let entries = this.$depPending.map((item)=>({src: item.src, content: item.content}));
+        console.time('shake');
+        let contents = treeShake(
+            {
+                entry: entries,
+                resolveSrc: {
+                    root: 'src',
+                    alias: this.wxaConfigs.resolve.alias,
+                },
+                commonJS: {
+                    enable: true,
+                },
+            }
+        );
+        console.timeEnd('shake');
+
+        let run = async () => {
+            let tasks = [];
+
+            while (this.$depPending.length) {
+                let dep = this.$depPending.shift();
+                let content = contents[dep.src] && contents[dep.src].formattedCode;
+                if (content) {
+                    dep.content = content;
+                }
+    
+                tasks.push(this.$parse(dep));
+            }
+    
+            let succ = await Promise.all(tasks);
+    
+            if (this.$depPending.length === 0) {
+                // dependencies resolve complete
+                this.progress.clean();
+                return succ;
+            } else {
+                let sub = await run();
+                return succ.concat(sub);
+            }
+        };
+
+        return run();
     }
 
     async $parse(dep) {

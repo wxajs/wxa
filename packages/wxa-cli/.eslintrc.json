@@ -27,7 +27,8 @@
         "no-trailing-spaces": "off",
         "require-jsdoc": "off",
         "camelcase": "warn",
-        "no-invalid-this": "warn"
+        "no-invalid-this": "warn",
+        "linebreak-style": ["off", "windows"]
     },
     "plugins": []
 }
