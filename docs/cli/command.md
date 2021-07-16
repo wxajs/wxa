@@ -218,3 +218,13 @@ wxa2 cli -a upload -p *
 ::: warning 警告
 一次性上传多个三方项目的时候，要求每个三方项目都有一个项目配置文件，即`project.config.json`。
 :::
+
+### 原生小程序编译成 WXA
+将原生小程序编译成 `wxa` 文件。
+
+```
+wxa convert -i <input dir> -o <output dir>
+```
+将 `<input dir>` 目录下的原生小程序代码编译成 `wxa` 文件到 `<output dir>` 目录。
+
+只会将 `.wxss`, `.json`, `.js`, `.wxml` 合并到一个 `.wxa` 文件中，而不会进行语法的转换。
